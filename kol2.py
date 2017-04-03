@@ -51,7 +51,11 @@ class Student:
 		return self.grades[subject.get_subject_name()].get_grades()
 	def get_avg(self, subject):
 		return self.grades[subject.get_subject_name()].get_avg()
-
+	def get_all_avg(self):
+		avg = 0		
+		for subject in self.grades:
+			avg += subject.get_avg() ###REPAIR!!!
+		avg=avg/float(len(grades))
 class Subject:
 	def __init__(self,subject_name):
 		self.subject_name=subject_name
@@ -76,5 +80,12 @@ przyra.add_students(student1)
 #przyra.set_student_grade(student2)
 przyra.set_student_grade(student1,4)
 przyra.set_student_grade(student1,5)
+
+przyra1 = Subject("przyra")
+przyra1.add_students(student1)
+#przyra.set_student_grade(student2)
+przyra1.set_student_grade(student1,1)
+przyra1.set_student_grade(student1,2)
 print student1.get_grades(przyra)
 print student1.get_avg(przyra)
+print student1.get_all_avg()
