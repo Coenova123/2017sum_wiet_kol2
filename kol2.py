@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 #
 # Class diary  
 #
@@ -15,22 +16,54 @@
 # data in text files (YAML, JSON).
 # If you have even more courage, try implementing user interface.
 
-#TODO: total avg
-#TODO: attendance
+'''
+Adding new student:
+student_ID = Student("Name","Surname",Index)
 
+Adding new subject:
+subject_ID = Subject("Subject Name")
 
+Connect student to subject:
+subject_ID.add_students(student_ID)
+
+Add new grade:
+subject_ID.set_student_grade(student_ID,Grade)
+
+Get student grades from subject:
+student_ID.get_grades(subject_ID)
+
+Get average grade from subject:
+student_ID.get_avg(subject)
+
+Get all student average across subjects:
+student_ID.get_all_avg()
+
+Add presence (attendance):
+subject_ID.add_presence(student_ID)
+
+Get student presence:
+subject_ID.get_presence(student_ID)
+
+'''
+
+'''Grade class is responsible for storing grades and students attendance per student/subject'''
 class Grade:
 	def __init__(self,student,subject):
 		self.student = student
 		self.subject = subject
 		self.grades = []
+		self.attendance = 0
 	def add_grade(self,grade):
 		self.grades.append(grade)
 	def get_grades(self):
 		return self.grades
 	def get_avg(self):
 		return sum(self.grades)/float(len(self.grades))
-
+	def add_presence(self):
+		self.attendance+=1
+	def get_presence(self):
+		return self.attendance
+'''Student class is responsible for storing student data and connection between subject and grades'''
 class Student:
 	def __init__(self,name,surname,index):
 		self.name=name
@@ -52,10 +85,15 @@ class Student:
 	def get_avg(self, subject):
 		return self.grades[subject.get_subject_name()].get_avg()
 	def get_all_avg(self):
-		avg = 0		
+		avg = 0	
 		for subject in self.grades:
-			avg += subject.get_avg() ###REPAIR!!!
-		avg=avg/float(len(grades))
+			avg+=self.grades[subject].get_avg()
+		return avg/float(len(self.grades))
+	def add_presence(self,subject):
+		self.grades[subject.get_subject_name()].add_presence()
+	def get_presence(self,subject):
+		return self.grades[subject.get_subject_name()].get_presence()
+'''Subject class is responsible for storing information about subject and students signed for classes'''
 class Subject:
 	def __init__(self,subject_name):
 		self.subject_name=subject_name
@@ -71,21 +109,14 @@ class Subject:
 	def set_student_grade(self,student,grade):
 		if student in self.student_list:
 			student.add_grade(self,grade)
-		
+	def get_students_avg(self):
+		avg=0
+		for student in self.student_list:
+			avg+=student.get_avg(self)
+		return avg/float(len(self.student_list))
+	def add_presence(self,student):
+		student.add_presence(self)
+	def get_presence(self,student):
+		return student.get_presence(self)
 
-student1 = Student("Adam","Nowak",1234)
-student2 = Student("Adam2","Nowak",1234)
-przyra = Subject("przyra")
-przyra.add_students(student1)
-#przyra.set_student_grade(student2)
-przyra.set_student_grade(student1,4)
-przyra.set_student_grade(student1,5)
 
-przyra1 = Subject("przyra")
-przyra1.add_students(student1)
-#przyra.set_student_grade(student2)
-przyra1.set_student_grade(student1,1)
-przyra1.set_student_grade(student1,2)
-print student1.get_grades(przyra)
-print student1.get_avg(przyra)
-print student1.get_all_avg()
