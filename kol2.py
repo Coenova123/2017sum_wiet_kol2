@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #
-# Class diary  
+# Class diary
 #
 # Create program for handling lesson scores.
 # Use python to handle student (highscool) class scores, and attendance.
@@ -10,113 +10,110 @@
 # - hold students name and surname
 # - Count total attendance of student
 # The default interface for interaction should be python interpreter.
-# Please, use your imagination and create more functionalities. 
+# Please, use your imagination and create more functionalities.
 # Your project should be able to handle entire school.
-# If you have enough courage and time, try storing (reading/writing) 
+# If you have enough courage and time, try storing (reading/writing)
 # data in text files (YAML, JSON).
 # If you have even more courage, try implementing user interface.
+import json
+import argparse
+parser = argparse.ArgumentParser()
+group = parser.add_mutually_exclusive_group(required=True)
+group.add_argument('--load', metavar='filename', help='load JSON from file')
+group.add_argument('--save', metavar='filename', help='save JSON to file')
+group.add_argument('--show', action="store_true", help='show loaded database')
+group.add_argument('--add_student', metavar='student_name', help='add new student to database')
+group.add_argument('--add_subject', nargs=2, metavar=('student_name', 'subject_name'),
+                    help='match subject to student')
+group.add_argument('--add_grade', nargs=3, metavar=('student_name', 'subject_name', 'grade'),
+                    help='add new grade to students subject')
+group.add_argument('--get_avg', nargs=2, metavar=('student_name', 'subject_name'),
+                    help='return student average from selected subject')
+group.add_argument('--get_avg_global', metavar='student_name', help='return total student average across subjects')
+group.add_argument('--increase_attendance', nargs=2, metavar=('student_name', 'subject_name'),
+                    help='increase student attendance at subject')
+group.add_argument('--decrease_attendance', nargs=2, metavar=('student_name', 'subject_name'),
+                    help='decrease student attendance at subject')
+group.add_argument('--increase_absence', nargs=2, metavar=('student_name', 'subject_name'),
+                    help='increase student absence at subject')
+group.add_argument('--decrease_absence', nargs=2, metavar=('student_name', 'subject_name'),
+                    help='decrease student absence at subject')
 
-'''
-Adding new student:
-student_ID = Student("Name","Surname",Index)
-
-Adding new subject:
-subject_ID = Subject("Subject Name")
-
-Connect student to subject:
-subject_ID.add_students(student_ID)
-
-Add new grade:
-subject_ID.set_student_grade(student_ID,Grade)
-
-Get student grades from subject:
-student_ID.get_grades(subject_ID)
-
-Get average grade from subject:
-student_ID.get_avg(subject)
-
-Get all student average across subjects:
-student_ID.get_all_avg()
-
-Add presence (attendance):
-subject_ID.add_presence(student_ID)
-
-Get student presence:
-subject_ID.get_presence(student_ID)
-
-'''
-
-'''Grade class is responsible for storing grades and students attendance per student/subject'''
-class Grade:
-	def __init__(self,student,subject):
-		self.student = student
-		self.subject = subject
-		self.grades = []
-		self.attendance = 0
-	def add_grade(self,grade):
-		self.grades.append(grade)
-	def get_grades(self):
-		return self.grades
-	def get_avg(self):
-		return sum(self.grades)/float(len(self.grades))
-	def add_presence(self):
-		self.attendance+=1
-	def get_presence(self):
-		return self.attendance
-'''Student class is responsible for storing student data and connection between subject and grades'''
-class Student:
-	def __init__(self,name,surname,index):
-		self.name=name
-		self.surname=surname
-		self.index=index
-		self.grades={}
-	def get_student_name(self):
-		return self.name
-	def get_student_surname(self):
-		return self.surname
-	def get_student_index(self):
-		return self.index	
-	def set_subject(self,subject):
-		self.grades[subject.get_subject_name()] = Grade(self,subject)
-	def add_grade(self,subject,grade):
-		self.grades[subject.get_subject_name()].add_grade(grade)
-	def get_grades(self, subject):
-		return self.grades[subject.get_subject_name()].get_grades()
-	def get_avg(self, subject):
-		return self.grades[subject.get_subject_name()].get_avg()
-	def get_all_avg(self):
-		avg = 0	
-		for subject in self.grades:
-			avg+=self.grades[subject].get_avg()
-		return avg/float(len(self.grades))
-	def add_presence(self,subject):
-		self.grades[subject.get_subject_name()].add_presence()
-	def get_presence(self,subject):
-		return self.grades[subject.get_subject_name()].get_presence()
-'''Subject class is responsible for storing information about subject and students signed for classes'''
-class Subject:
-	def __init__(self,subject_name):
-		self.subject_name=subject_name
-		self.student_list = [];
-	def add_students(self,student):
-		self.student_list.append(student)
-		student.set_subject(self)
-	def get_student_list(self):
-		return self.student_list
-
-	def get_subject_name(self):
-		return self.subject_name
-	def set_student_grade(self,student,grade):
-		if student in self.student_list:
-			student.add_grade(self,grade)
-	def get_students_avg(self):
-		avg=0
-		for student in self.student_list:
-			avg+=student.get_avg(self)
-		return avg/float(len(self.student_list))
-	def add_presence(self,student):
-		student.add_presence(self)
-	def get_presence(self,student):
-		return student.get_presence(self)
+args = parser.parse_args()
 
 
+class Diary(object):
+	def __init__(self):
+		self.students = {}
+
+	def add_student(self, name):
+		self.students.update({name: {}})  # {"subject": "", "Grades": []}
+
+	def add_subject_to_student(self, name, subject_name):
+		self.students[name].update({subject_name: {'Absence': 0, 'Attendance': 0, 'Grades': []}})
+
+	def add_grade_to_subject_to_student(self, name, subject_name, grade):
+		self.students[name][subject_name]['Grades'].append(grade)
+
+	def get_student_avg_from_subject(self, name, subject_name):
+		return float(sum(self.students[name][subject_name]['Grades'])) / len(self.students[name][subject_name]['Grades'])
+
+	def get_student_avg_global(self, name):
+		avg = []
+		for key in self.students[name]:
+			if len(self.students[name][key]['Grades']) != 0:
+				avg.append(float(sum(self.students[name][key]['Grades']))/len(self.students[name][key]['Grades']))
+		return float(sum(avg))/len(avg)
+
+	def increase_student_attendance(self, name, subject_name):
+		self.students[name][subject_name]['Attendance']+=1
+
+	def decrease_student_attendance(self, name, subject_name):
+		self.students[name][subject_name]['Attendance'] -= 1
+
+	def increase_student_absence(self, name, subject_name):
+		self.students[name][subject_name]['Absence']+=1
+
+	def decrease_student_absence(self, name, subject_name):
+		self.students[name][subject_name]['Absence'] -= 1
+
+	def get_diary(self):
+		return json.dumps(self.students)
+
+	def save_json_dump(self, filename):
+		json_file_dump = json.dumps(self.students, indent=4)
+		f = open(filename, 'w')
+		print >> f, json_file_dump
+		f.close()
+
+	def import_json(self,filename):
+		json_data = open(filename).read()
+		self.students = json.loads(json_data)
+
+
+diary = Diary()
+if args.load:
+	diary.import_json(args.load)
+if args.show:
+	print diary.get_diary()
+if args.add_student:
+	diary.add_student(args.add_student)
+if args.add_subject:
+	diary.add_subject_to_student(args.add_subject[0], args.add_subject[1])
+if args.add_grade:
+	diary.add_grade_to_subject_to_student(args.add_grade[0], args.add_grade[1], float(args.add_grade[2]))
+if args.get_avg:
+	print diary.get_student_avg_from_subject(args.get_avg[0], args.get_avg[1])
+if args.get_avg_global:
+	print diary.get_student_avg_global(args.get_avg_global)
+if args.increase_attendance:
+	diary.increase_student_attendance(args.increase_attendance[0], args.increase_attendance[1])
+if args.decrease_attendance:
+	diary.decrease_student_attendance(args.decrease_attendance[0], args.decrease_attendance[1])
+if args.increase_absence:
+	diary.increase_student_absence(args.increase_absence[0], args.increase_absence[1])
+if args.decrease_absence:
+	diary.decrease_student_absence(args.decrease_absence[0], args.decrease_absence[1])
+
+if args.save:
+	diary.save_json_dump(args.save)
